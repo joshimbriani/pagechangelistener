@@ -18,7 +18,6 @@ def run():
         if r:
             golden_site_path = path.join('goldens', site.replace("/", "-")
                     + ".txt")
-            print(golden_site_path)
             if path.exists(golden_site_path):
                 # Check and see if the golden file matches the returned code
                 with open(golden_site_path) as f:
