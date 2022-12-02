@@ -2,10 +2,14 @@ beautifulsoup4==4.9.1
 certifi==2020.4.5.1
 chardet==3.0.4
 idna==2.9
+praw==7.6.1
+prawcore==2.3.0
 PyJWT==1.7.1
 pytz==2020.1
 requests==2.23.0
 six==1.15.0
 soupsieve==2.0.1
 twilio==6.40.0
+update-checker==0.18.0
 urllib3==1.25.9
+websocket-client==1.4.2
