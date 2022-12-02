@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from bs4.element import Comment
 import requests
 from twilio.rest import Client
+import praw
 
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 
@@ -27,16 +28,41 @@ def run():
                     if golden_contents != new_contents:
                         diff = make_diff(golden_contents, new_contents)
                         paste_url = make_paste(f"{site}\n{diff}", site[8:28])
-                        send_page_change_message(site, paste_url)
+                        #send_page_change_message(site, paste_url)
 
             # Update file
             with open(golden_site_path, "w") as f:
                 f.write(text_from_html(r.content))
 
+    # Handle Reddit specially
+    all_sites_and_terms = get_partial_page_change_urls_and_terms()
+    reddit = make_reddit()
+    for subreddit in all_sites_and_terms["reddit"]:
+        submissions = []
+        for submission in reddit.subreddit(subreddit["name"]).new(limit=20):
+            submissions.append(submission.title)
+
+        all_submissions = "\n".join(submissions)
+        golden_path = path.join('goldens', 'reddit', subreddit["name"] + '.txt')
+        if path.exists(golden_path):
+            with open(golden_path) as f:
+                golden_contents = f.read()
+                for term in subreddit["terms"]:
+                    if term.lower() in all_submissions.lower() and term.lower() not in golden_contents.lower():
+                        send_reddit_change_message(term, subreddit["name"])
+
+        with open(golden_path, "w") as f:
+                f.write(all_submissions)
+    
+
 def get_watch_urls():
     with open('urls.txt') as f:
         for line in f:
             yield line
+
+def get_partial_page_change_urls_and_terms():
+    with open('partial_page_changes.json', "r") as f:
+        return json.loads(f.read())
 
 def tag_visible(element):
     if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
@@ -78,3 +104,21 @@ def send_page_change_message(site, paste_url):
         client = Client(creds["account_sid"], creds["auth_token"])
         body = "Site {} changed. See diff at {}".format(site, paste_url)
         message = client.messages.create(body=body, from_=creds["from_phone_num"], to=creds["to_phone_num"])
+
+def send_reddit_change_message(term, subreddit_name):
+    with open('creds.json') as f:
+        creds = json.load(f)
+
+        client = Client(creds["account_sid"], creds["auth_token"])
+        body = f"Found a match for term {term} on https://old.reddit.com/r/{subreddit_name}/"
+        message = client.messages.create(body=body, from_=creds["from_phone_num"], to=creds["to_phone_num"])
+
+def make_reddit():
+    with open('creds.json') as f:
+        creds = json.load(f)
+
+        return praw.Reddit(
+            client_id=creds["reddit_client_id"],
+            client_secret=creds["reddit_client_secret"],
+            user_agent="PageChangeListenerJEI"
+        )
