@@ -14,7 +14,7 @@ import messaging
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 
 def run():
-    messaging = messaging.Messaging()
+    m = messaging.Messaging()
     for site in get_watch_urls():
         site = site.rstrip('\n')
         if not re.compile(URL_REGEX).match(site):
@@ -31,7 +31,7 @@ def run():
                     if golden_contents != new_contents:
                         diff = make_diff(golden_contents, new_contents)
                         paste_url = make_paste(f"{site}\n{diff}", site[8:28])
-                        send_page_change_message(site, paste_url)
+                        send_page_change_message(m, site, paste_url)
 
             # Update file
             with open(golden_site_path, "w") as f:
@@ -52,7 +52,7 @@ def run():
                 golden_contents = f.read()
                 for term in subreddit["terms"]:
                     if term.lower() in all_submissions.lower() and term.lower() not in golden_contents.lower():
-                        send_reddit_change_message(term, subreddit["name"])
+                        send_reddit_change_message(m, term, subreddit["name"])
 
         with open(golden_path, "w") as f:
                 f.write(all_submissions)
@@ -100,17 +100,17 @@ def make_paste(paste_contents: str, url_for: str) -> str:
         r = requests.post('https://pastebin.com/api/api_post.php', data=post_object)
         return r.text
 
-def send_page_change_message(site, paste_url):
+def send_page_change_message(m, site, paste_url):
     with open('creds.json') as f:
         creds = json.load(f)
 
         client = Client(creds["account_sid"], creds["auth_token"])
         body = "Site {} changed. See diff at {}".format(site, paste_url)
         # Send both a notification and a text for now.
-        messaging.send_message("Page Change", body)
+        m.send_message("Page Change", body)
         message = client.messages.create(body=body, from_=creds["from_phone_num"], to=creds["to_phone_num"])
 
-def send_reddit_change_message(term, subreddit_name):
+def send_reddit_change_message(m, term, subreddit_name):
     with open('creds.json') as f:
         creds = json.load(f)
 
@@ -118,7 +118,7 @@ def send_reddit_change_message(term, subreddit_name):
         body = f"Found a match for term {term} on https://old.reddit.com/r/{subreddit_name}/"
         
         # Send both a notification and a text for now.
-        messaging.send_message("Reddit Watched Term Found", body)
+        m.send_message("Reddit Watched Term Found", body)
         message = client.messages.create(body=body, from_=creds["from_phone_num"], to=creds["to_phone_num"])
 
 def make_reddit():
