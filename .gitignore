@@ -155,3 +155,6 @@ env/
 urls.txt
 
 # End of https://www.gitignore.io/api/linux,macos,python
+
+ebay_rest.json
+seen_auction_items.txt
