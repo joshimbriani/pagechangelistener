@@ -46,6 +46,6 @@ soupsieve==2.0.1
 twilio==8.3.0
 update-checker==0.18.0
 uritemplate==4.1.1
-urllib3==1.25.9
+urllib3==1.26.17
 websocket-client==1.4.2
 yarl==1.9.2
