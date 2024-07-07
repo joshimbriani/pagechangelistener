@@ -6,7 +6,6 @@ from difflib import unified_diff
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 import requests
-from twilio.rest import Client
 import praw
 
 import messaging

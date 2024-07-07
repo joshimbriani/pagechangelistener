@@ -1,7 +1,7 @@
 import firebase_admin
 from firebase_admin import messaging
 
-DEFAULT_TOKEN = "eWykbneWQ4GWswCZum1g5S:APA91bFSzZBCTTEWFXzxpGUfK737xDfA1h0wgIOCu6otWzK0CYkFAhoATFcz0rkv6HvWPoBVliPnACTywX0dhXUNqgu6peEuQbHG5yI4BitmyASNewp4tU7SELYgiNK6JxV9ZybqioR_"
+DEFAULT_TOKEN = "cH2gHjFgRFCfEHVZvAoXNN:APA91bGHySRpdxckK4of7Y7_fsNmBh__h-7R3wH6837ifw-iQ9Shcxs0mjAhQW_XpAH8izLyYm2Sqf0mYboz0YoOjChzMsZuCjY8a93lvrmTxtgV7QKWopJy-7Dnk3Ai_T3bvooUdpTg"
 
 class Messaging:
     # This is just going to message my phone so no worries keeping the list

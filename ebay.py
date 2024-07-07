@@ -3,7 +3,7 @@ NOTE: Assumes that OPENAI_API_KEY exists in the env.
 """
 
 from ebay_rest import API, Error
-import openai
+#import openai
 
 import messaging
 
@@ -55,21 +55,46 @@ def get_seen_ids():
 
 def get_auction_items():
     items = []
+    item_ids = set()
     try:
         api = API(application='production_1', user='production_1', header='US')
     except Error as error:
         print(f'Error {error.number} is {error.reason} {error.detail}.\n')
     else:
         try:
-            for record in api.buy_browse_search(q=SEARCH_QUERY, sort='newlyListed', limit=20):
+            for record in api.buy_browse_search(q="Halloween Horror Nights", sort='newlyListed', limit=20):
                 if 'record' not in record:
                     pass    # TODO Refer to non-records, they contain optimization information.
                 else:
-                    items.append(record['record'])
+                    r = record['record']
+                    if 'legacy_item_id' not in r:
+                        continue
+                    else:
+                        if r['legacy_item_id'] not in item_ids:
+                            item_ids.add(r['legacy_item_id'])
+                            items.append(record['record'])
         except Error as error:
             print(f'Error {error.number} is {error.reason} {error.detail}.\n')
         else:
             pass
+
+        try:
+            for record in api.buy_browse_search(q="HHN", sort='newlyListed', limit=20):
+                if 'record' not in record:
+                    pass    # TODO Refer to non-records, they contain optimization information.
+                else:
+                    r = record['record']
+                    if 'legacy_item_id' not in r:
+                        continue
+                    else:
+                        if r['legacy_item_id'] not in item_ids:
+                            item_ids.add(r['legacy_item_id'])
+                            items.append(record['record'])
+        except Error as error:
+            print(f'Error {error.number} is {error.reason} {error.detail}.\n')
+        else:
+            pass
+
     return items
 
 def write_seen_ids(seen_ids):
@@ -77,6 +102,7 @@ def write_seen_ids(seen_ids):
         f.write('\n'.join(seen_ids))
 
 def get_classifier_decision(title):
+    return "yes"
     with open('HHNMapStartingPrompt.txt') as f:
         prompt = f.read()
 
