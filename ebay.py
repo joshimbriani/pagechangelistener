@@ -1,9 +1,8 @@
-"""
-NOTE: Assumes that OPENAI_API_KEY exists in the env.
-"""
+import os
+import time
 
 from ebay_rest import API, Error
-#import openai
+import google.generativeai as genai
 
 import messaging
 
@@ -16,6 +15,9 @@ SEARCH_LIMIT = 20
 # title. This only backfires when someone misspells *all* of them.
 MUST_MATCH_IN_TITLE = ["hhn", "halloween", "horror", "nights"]
 
+genai.configure(api_key=os.environ['GOOGLE_API_KEY'])
+model = genai.GenerativeModel('gemini-1.5-flash')
+
 def main():
     m = messaging.Messaging()
 
@@ -27,7 +29,7 @@ def main():
 
     # Loop over all the auction items and skip the ones that we've seen already.
     for item in auction_items:
-        item_id = item['item_id']
+        item_id = item['legacy_item_id']
         if item_id not in seen_ids:
             item_title = item['title']
             matches = False
@@ -37,9 +39,9 @@ def main():
             seen_ids.append(item_id)
 
             if matches:
-                #print(f"Sending {item_title} to GPT 3.5")
-                response = get_classifier_decision(item_title.replace("\"", "\\\""))["choices"][0]["message"]["content"].lower()
-                #print("Classifier returned: ", response)
+                time.sleep(5)
+                response = get_classifier_decision(item_title.replace("\"", "\\\""))
+                print("Classifier returned ", response)
 
                 if "yes" in response:
                     # Send a notification.
@@ -102,19 +104,14 @@ def write_seen_ids(seen_ids):
         f.write('\n'.join(seen_ids))
 
 def get_classifier_decision(title):
-    return "yes"
     with open('HHNMapStartingPrompt.txt') as f:
         prompt = f.read()
 
-    c = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content":prompt},
-            {"role": "user", "content": f"Am I interested in the auction with the following title: '{title}'?"},
-        ]
-    )
+    response = model.generate_content(prompt.replace("[]", title))
+    if not response.text or response.text.strip().lower() not in ["yes", "no"]:
+        return "yes"
 
-    return c
+    return response.text.strip().lower()
 
 if __name__ == "__main__":
     main()
