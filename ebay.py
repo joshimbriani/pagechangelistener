@@ -41,7 +41,6 @@ def main():
             if matches:
                 time.sleep(5)
                 response = get_classifier_decision(item_title.replace("\"", "\\\""))
-                print("Classifier returned ", response)
 
                 if "yes" in response:
                     # Send a notification.
